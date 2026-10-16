@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тесты Rick and Morty Portal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0a0e1a 0%, #1b2a3a 100%);
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #6cffb0;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+    .subtitle {
+      color: #8899aa;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .summary {
+      background: #141c2c;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+      border: 1px solid #2a3a4a;
+    }
+    .summary-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .summary-item.pass { color: #4caf50; }
+    .summary-item.fail { color: #f44336; }
+    .summary-item.total { color: #6cffb0; }
+    .summary-item .icon { font-size: 24px; }
+    .test-group {
+      background: #141c2c;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid #2a3a4a;
+    }
+    .test-group h2 {
+      color: #6cffb0;
+      font-size: 18px;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #2a3a4a;
+    }
+    .test {
+      padding: 12px 16px;
+      margin: 8px 0;
+      border-radius: 8px;
+      font-size: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      transition: transform 0.15s;
+    }
+    .test:hover { transform: translateX(4px); }
+    .test.pass {
+      background: rgba(76, 175, 80, 0.1);
+      border-left: 4px solid #4caf50;
+      color: #a5d6a7;
+    }
+    .test.fail {
+      background: rgba(244, 67, 54, 0.15);
+      border-left: 4px solid #f44336;
+      color: #ef9a9a;
+    }
+    .test .icon {
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .test .details {
+      color: #8899aa;
+      font-size: 12px;
+      margin-top: 4px;
+      font-family: 'Courier New', monospace;
+    }
+    .footer {
+      text-align: center;
+      color: #556677;
+      font-size: 12px;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #2a3a4a;
+    }
+    .date {
+      color: #6cffb0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Тесты Rick and Morty Portal</h1>
+    <p class="subtitle">
+      Автоматическое тестирование ключевых функций приложения | 
+      <span class="date" id="testDate"></span>
+    </p>
+
+    <div class="summary">
+      <div class="summary-item total">
+        <span class="icon">📊</span>
+        <span>Всего: <span id="totalCount">0</span></span>
+      </div>
+      <div class="summary-item pass">
+        <span class="icon">✅</span>
+        <span>Пройдено: <span id="passCount">0</span></span>
+      </div>
+      <div class="summary-item fail">
+        <span class="icon">❌</span>
+        <span>Провалено: <span id="failCount">0</span></span>
+      </div>
+      <div class="summary-item" id="statusBadge">
+        <span class="icon" id="statusIcon">⏳</span>
+        <span id="statusText">Выполняется...</span>
+      </div>
+    </div>
+
+    <div id="results"></div>
+
+    <div class="footer">
+      Rick & Morty Portal — курсовая работа | Тесты на чистом JavaScript
+    </div>
+  </div>
+
+  <script>
+    // =====================================================
+    // МИНИ-ФРЕЙМВОРК ДЛЯ ТЕСТИРОВАНИЯ
+    // =====================================================
+    
+    let passed = 0;
+    let failed = 0;
+    let total = 0;
+    let currentGroup = null;
+
+    function describe(groupName, fn) {
+      // Создаём контейнер для группы тестов
+      const groupDiv = document.createElement('div');
+      groupDiv.className = 'test-group';
+      groupDiv.innerHTML = `<h2>${groupName}</h2>`;
+      document.getElementById('results').appendChild(groupDiv);
+      currentGroup = groupDiv;
+      fn();
+      currentGroup = null;
+    }
+
+    function it(testName, fn) {
+      total++;
+      const testDiv = document.createElement('div');
+      
+      try {
+        fn();
+        passed++;
+        testDiv.className = 'test pass';
+        testDiv.innerHTML = `<span class="icon">✅</span><span>${testName}</span>`;
+      } catch (error) {
+        failed++;
+        testDiv.className = 'test fail';
+        testDiv.innerHTML = `
+          <span class="icon">❌</span>
+          <div>
+            <div>${testName}</div>
+            <div class="details">${error.message}</div>
+          </div>
+        `;
+      }
+      
+      if (currentGroup) {
+        currentGroup.appendChild(testDiv);
+      }
+    }
+
+    function expect(actual) {
+      return {
+        toBe(expected) {
+          if (actual !== expected) {
+            throw new Error(`Ожидалось "${expected}", получено "${actual}"`);
+          }
+        },
+        toEqual(expected) {
+          const a = JSON.stringify(actual);
+          const b = JSON.stringify(expected);
+          if (a !== b) {
+            throw new Error(`Ожидалось ${b}, получено ${a}`);
+          }
+        },
+        toBeTruthy() {
+          if (!actual) {
+            throw new Error(`Ожидалось истинное значение, получено "${actual}"`);
+          }
+        },
+        toBeFalsy() {
+          if (actual) {
+            throw new Error(`Ожидалось ложное значение, получено "${actual}"`);
+          }
+        },
+        toContain(expected) {
+          if (!actual.includes(expected)) {
+            throw new Error(`Ожидалось содержание "${expected}"`);
+          }
+        },
+        toHaveLength(expected) {
+          if (actual.length !== expected) {
+            throw new Error(`Ожидалась длина ${expected}, получена ${actual.length}`);
+          }
+        },
+        toBeDefined() {
+          if (actual === undefined) {
+            throw new Error('Значение не определено');
+          }
+        },
+        toBeGreaterThan(expected) {
+          if (actual <= expected) {
+            throw new Error(`Ожидалось значение больше ${expected}, получено ${actual}`);
+          }
+        }
+      };
+    }
+
+    // =====================================================
+    // ТЕСТИРУЕМЫЕ ФУНКЦИИ (скопированы из проекта)
+    // =====================================================
+
+    // Фильтрация персонажей по имени (из CharactersPage.jsx)
+    function filterCharacters(characters, searchQuery) {
+      if (!searchQuery) return characters;
+      return characters.filter(char =>
+        char.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Пагинация (из CharactersPage.jsx)
+    function paginate(items, page, limit) {
+      const start = (page - 1) * limit;
+      return items.slice(start, start + limit);
+    }
+
+    function getTotalPages(items, limit) {
+      return Math.ceil(items.length / limit);
+    }
+
+    // Проверка статуса персонажа (из CharacterCard.jsx)
+    function getStatusClass(status) {
+      if (status === 'Alive') return 'bg-green-500';
+      if (status === 'Dead') return 'bg-red-500';
+      return 'bg-gray-500';
+    }
+
+    function getStatusText(status) {
+      if (status === 'Alive') return 'Жив';
+      if (status === 'Dead') return 'Мёртв';
+      return 'Неизвестно';
+    }
+
+    // Проверка принадлежности к избранному
+    function isFavorite(favorites, characterId) {
+      return favorites.some(f => f.character_api_id === characterId);
+    }
+
+    // Подсчёт статистики аналитики
+    function countAnalytics(events) {
+      return events.reduce(
+        (acc, e) => {
+          acc.total++;
+          if (e.event_type === 'view') acc.views++;
+          if (e.event_type === 'search') acc.searches++;
+          if (e.event_type === 'add') acc.adds++;
+          return acc;
+        },
+        { views: 0, searches: 0, adds: 0, total: 0 }
+      );
+    }
+
+    // =====================================================
+    // ТЕСТЫ
+    // =====================================================
+
+    // --- Группа 1: Фильтрация персонажей ---
+    describe('🔍 Фильтрация персонажей по имени', () => {
+      const characters = [
+        { name: 'Rick Sanchez' },
+        { name: 'Morty Smith' },
+        { name: 'Summer Smith' },
+        { name: 'Beth Smith' },
+        { name: 'Jerry Smith' }
+      ];
+
+      it('Возвращает всех при пустом запросе', () => {
+        const result = filterCharacters(characters, '');
+        expect(result.length).toBe(5);
+      });
+
+      it('Фильтрует по "Rick" — находит одного', () => {
+        const result = filterCharacters(characters, 'Rick');
+        expect(result.length).toBe(1);
+        expect(result[0].name).toBe('Rick Sanchez');
+      });
+
+      it('Фильтрует по "Smith" — находит четверых', () => {
+        const result = filterCharacters(characters, 'Smith');
+        expect(result.length).toBe(4);
+      });
+
+      it('Поиск регистронезависимый ("rick")', () => {
+        const result = filterCharacters(characters, 'rick');
+        expect(result.length).toBe(1);
+      });
+
+      it('Возвращает пустой массив при отсутствии совпадений', () => {
+        const result = filterCharacters(characters, 'НесуществующийПерсонаж');
+        expect(result.length).toBe(0);
+      });
+    });
+
+    // --- Группа 2: Пагинация ---
+    describe('📄 Пагинация', () => {
+      const items = Array.from({ length: 25 }, (_, i) => ({ id: i + 1 }));
+
+      it('Первая страница содержит 10 элементов', () => {
+        const page1 = paginate(items, 1, 10);
+        expect(page1.length).toBe(10);
+        expect(page1[0].id).toBe(1);
+      });
+
+      it('Вторая страница содержит следующие 10 элементов', () => {
+        const page2 = paginate(items, 2, 10);
+        expect(page2.length).toBe(10);
+        expect(page2[0].id).toBe(11);
+      });
+
+      it('Последняя страница содержит 5 элементов', () => {
+        const page3 = paginate(items, 3, 10);
+        expect(page3.length).toBe(5);
+      });
+
+      it('Общее количество страниц = 3', () => {
+        const totalPages = getTotalPages(items, 10);
+        expect(totalPages).toBe(3);
+      });
+
+      it('Общее количество страниц с лимитом 5 = 5', () => {
+        const totalPages = getTotalPages(items, 5);
+        expect(totalPages).toBe(5);
+      });
+
+      it('Страница за пределами возвращает пустой массив', () => {
+        const page = paginate(items, 10, 10);
+        expect(page.length).toBe(0);
+      });
+    });
+
+    // --- Группа 3: Статусы персонажей ---
+    describe('🎨 Статусы персонажей', () => {
+      it('Alive → зелёный цвет', () => {
+        expect(getStatusClass('Alive')).toBe('bg-green-500');
+      });
+
+      it('Dead → красный цвет', () => {
+        expect(getStatusClass('Dead')).toBe('bg-red-500');
+      });
+
+      it('unknown → серый цвет', () => {
+        expect(getStatusClass('unknown')).toBe('bg-gray-500');
+      });
+
+      it('Alive → текст "Жив"', () => {
+        expect(getStatusText('Alive')).toBe('Жив');
+      });
+
+      it('Dead → текст "Мёртв"', () => {
+        expect(getStatusText('Dead')).toBe('Мёртв');
+      });
+
+      it('unknown → текст "Неизвестно"', () => {
+        expect(getStatusText('unknown')).toBe('Неизвестно');
+      });
+    });
+
+    // --- Группа 4: Избранное ---
+    describe('⭐ Избранное', () => {
+      const favorites = [
+        { character_api_id: 1, character_name: 'Rick' },
+        { character_api_id: 2, character_name: 'Morty' }
+      ];
+
+      it('Персонаж с id=1 находится в избранном', () => {
+        expect(isFavorite(favorites, 1)).toBe(true);
+      });
+
+      it('Персонаж с id=2 находится в избранном', () => {
+        expect(isFavorite(favorites, 2)).toBe(true);
+      });
+
+      it('Персонаж с id=999 НЕ в избранном', () => {
+        expect(isFavorite(favorites, 999)).toBe(false);
+      });
+
+      it('Пустой список — ничего не в избранном', () => {
+        expect(isFavorite([], 1)).toBe(false);
+      });
+    });
+
+    // --- Группа 5: Аналитика ---
+    describe('📊 Подсчёт аналитики', () => {
+      const events = [
+        { event_type: 'view' },
+        { event_type: 'view' },
+        { event_type: 'search' },
+        { event_type: 'add' },
+        { event_type: 'add' },
+        { event_type: 'add' }
+      ];
+
+      it('Общее количество событий = 6', () => {
+        const stats = countAnalytics(events);
+        expect(stats.total).toBe(6);
+      });
+
+      it('Просмотров = 2', () => {
+        const stats = countAnalytics(events);
+        expect(stats.views).toBe(2);
+      });
+
+      it('Поисков = 1', () => {
+        const stats = countAnalytics(events);
+        expect(stats.searches).toBe(1);
+      });
+
+      it('Добавлений = 3', () => {
+        const stats = countAnalytics(events);
+        expect(stats.adds).toBe(3);
+      });
+
+      it('Пустой список → все нули', () => {
+        const stats = countAnalytics([]);
+        expect(stats.total).toBe(0);
+        expect(stats.views).toBe(0);
+        expect(stats.searches).toBe(0);
+        expect(stats.adds).toBe(0);
+      });
+    });
+
+    // --- Группа 6: Валидация формы создания персонажа ---
+    describe('📝 Валидация формы создания персонажа', () => {
+      function validateCharacterForm(form) {
+        const errors = [];
+        if (!form.name || form.name.trim() === '') {
+          errors.push('Имя обязательно');
+        }
+        if (form.name && form.name.length > 100) {
+          errors.push('Имя слишком длинное');
+        }
+        return errors;
+      }
+
+      it('Пустое имя → ошибка', () => {
+        const errors = validateCharacterForm({ name: '' });
+        expect(errors.length).toBe(1);
+        expect(errors[0]).toBe('Имя обязательно');
+      });
+
+      it('Имя из пробелов → ошибка', () => {
+        const errors = validateCharacterForm({ name: '   ' });
+        expect(errors.length).toBe(1);
+      });
+
+      it('Корректное имя → без ошибок', () => {
+        const errors = validateCharacterForm({ name: 'Мой персонаж' });
+        expect(errors.length).toBe(0);
+      });
+
+      it('Слишком длинное имя → ошибка', () => {
+        const errors = validateCharacterForm({ name: 'a'.repeat(101) });
+        expect(errors.length).toBe(1);
+      });
+    });
+
+    // --- Группа 7: Обработка ошибок ---
+    describe('⚠️ Обработка ошибок', () => {
+      it('Невалидный статус → "unknown"', () => {
+        const status = getStatusText('InvalidStatus');
+        expect(status).toBe('Неизвестно');
+      });
+
+      it('Невалидный URL API → ошибка', () => {
+        const buildUrl = (base, path) => {
+          if (!base || !path) throw new Error('Невалидные параметры URL');
+          return `${base}${path}`;
+        };
+        let errorCaught = false;
+        try {
+          buildUrl('', '/character');
+        } catch (e) {
+          errorCaught = true;
+        }
+        expect(errorCaught).toBe(true);
+      });
+
+      it('Пустой массив персонажей → пустая пагинация', () => {
+        const result = paginate([], 1, 10);
+        expect(result.length).toBe(0);
+      });
+    });
+
+    // =====================================================
+    // ИТОГИ
+    // =====================================================
+
+    document.getElementById('totalCount').textContent = total;
+    document.getElementById('passCount').textContent = passed;
+    document.getElementById('failCount').textContent = failed;
+    document.getElementById('testDate').textContent = new Date().toLocaleString('ru-RU');
+
+    const statusBadge = document.getElementById('statusBadge');
+    const statusIcon = document.getElementById('statusIcon');
+    const statusText = document.getElementById('statusText');
+
+    if (failed === 0) {
+      statusBadge.classList.add('pass');
+      statusIcon.textContent = '🎉';
+      statusText.textContent = 'Все тесты пройдены!';
+    } else {
+      statusBadge.classList.add('fail');
+      statusIcon.textContent = '⚠️';
+      statusText.textContent = `Есть проблемы: ${failed}`;
+    }
+
+    // Вывод в консоль для отладки
+    console.log(`%c📊 Итого: ${passed}/${total} тестов пройдено`, 
+      `color: ${failed === 0 ? '#4caf50' : '#f44336'}; font-size: 16px; font-weight: bold;`);
+  </script>
+</body>
+</html>
