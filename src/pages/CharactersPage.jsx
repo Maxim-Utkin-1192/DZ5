@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getCharacters } from '../api/rickAndMortyApi'
 import {
-  getDbCharacters,
+  getUserCharacters,
   addToFavorites,
   getFavorites,
   logAnalyticsEvent
@@ -65,18 +65,22 @@ export default function CharactersPage() {
     }
   }, [page, search, user])
 
-  // Загрузка созданных персонажей
+  // Загрузка ТОЛЬКО СВОИХ созданных персонажей
   useEffect(() => {
     async function loadDb() {
+      if (!user) {
+        setDbCharacters([])
+        return
+      }
       try {
-        const data = await getDbCharacters()
+        const data = await getUserCharacters(user.id)
         setDbCharacters(data || [])
       } catch (e) {
         console.error('Ошибка загрузки БД персонажей:', e)
       }
     }
     loadDb()
-  }, [])
+  }, [user])
 
   // Загрузка избранного
   useEffect(() => {
@@ -128,25 +132,20 @@ export default function CharactersPage() {
   const isFavorite = (character) =>
     favorites.some((f) => f.character_api_id === character.id)
 
-  // Фильтрация созданных персонажей по поисковому запросу
+  // Фильтрация своих созданных персонажей по поиску
   const filteredDbCharacters = search
     ? dbCharacters.filter((char) =>
         char.name.toLowerCase().includes(search.toLowerCase())
       )
     : dbCharacters
 
-  // Общее количество найденного с учётом обоих источников
-  const totalApiFound = characters.length
-  const totalDbFound = filteredDbCharacters.length
-  const totalFound = totalApiFound + totalDbFound
-  const showEmptyMessage =
-    !loading && !error && search && totalFound === 0
+  const totalFound = characters.length + filteredDbCharacters.length
+  const showEmptyMessage = !loading && !error && search && totalFound === 0
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Персонажи</h1>
 
-      {/* Форма поиска */}
       <form onSubmit={handleSearch} className="mb-6 flex gap-2">
         <input
           type="text"
@@ -172,7 +171,6 @@ export default function CharactersPage() {
         )}
       </form>
 
-      {/* Индикатор загрузки */}
       {loading && (
         <div className="text-center py-10">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -180,14 +178,12 @@ export default function CharactersPage() {
         </div>
       )}
 
-      {/* Настоящая ошибка (сеть, 500 и т.п.) */}
       {error && !loading && (
         <div className="bg-red-100 border border-red-400 text-red-700 p-4 rounded mb-6">
           <p>❌ {error}</p>
         </div>
       )}
 
-      {/* Сообщение "ничего не найдено" */}
       {showEmptyMessage && (
         <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 p-4 rounded mb-6">
           <p>🔍 По запросу «{search}» ничего не найдено</p>
@@ -195,14 +191,12 @@ export default function CharactersPage() {
         </div>
       )}
 
-      {/* Сообщение "ничего не найдено" от API, когда БД тоже пустая */}
       {notFound && !showEmptyMessage && !loading && !error && (
         <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 p-4 rounded mb-6">
           <p>🔍 По запросу «{search}» ничего не найдено в Rick and Morty API</p>
         </div>
       )}
 
-      {/* Карточки персонажей из API */}
       {!loading && !error && characters.length > 0 && (
         <>
           <h2 className="text-xl font-bold mb-4">
@@ -219,7 +213,6 @@ export default function CharactersPage() {
             ))}
           </div>
 
-          {/* Пагинация */}
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-4 mt-8">
               <button
@@ -244,11 +237,10 @@ export default function CharactersPage() {
         </>
       )}
 
-      {/* Мои персонажи из базы данных (с учётом поиска) */}
-      {filteredDbCharacters.length > 0 && !loading && (
+      {user && filteredDbCharacters.length > 0 && !loading && (
         <div className="mt-12">
           <h2 className="text-xl font-bold mb-4">
-            Персонажи, созданные пользователями ({filteredDbCharacters.length})
+            Ваши созданные персонажи ({filteredDbCharacters.length})
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredDbCharacters.map((char) => (
