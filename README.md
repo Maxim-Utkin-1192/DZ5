@@ -29,3 +29,50 @@
 | JavaScript (ES6+) | Логика приложения |
 
 ## 📁 Структура проекта
+
+rick-and-morty-portal/
+├── src/
+│ ├── api/
+│ │ ├── supabaseClient.js # Клиент Supabase
+│ │ ├── rickAndMortyApi.js # API Rick and Morty
+│ │ └── dbApi.js # Работа с БД Supabase
+│ ├── components/
+│ │ └── CharacterCard.jsx # Карточка персонажа
+│ ├── context/
+│ │ └── AuthContext.jsx # Контекст авторизации
+│ ├── pages/
+│ │ ├── CharactersPage.jsx # Список персонажей
+│ │ ├── CharacterDetailPage.jsx # Детали персонажа
+│ │ ├── AddCharacterPage.jsx # Создание персонажа
+│ │ ├── AnalyticsPage.jsx # Аналитика
+│ │ ├── LoginPage.jsx # Вход
+│ │ └── RegisterPage.jsx # Регистрация
+│ ├── test/
+│ │ ├── CharacterCard.test.jsx
+│ │ ├── LoginPage.test.jsx
+│ │ └── rickAndMortyApi.test.js
+│ ├── App.jsx
+│ ├── main.jsx
+│ └── index.css
+├── tests.html # Тесты на чистом JS (для Windows 8.1)
+├── .env.example
+├── .gitignore
+├── package.json
+├── vite.config.js
+├── tailwind.config.js
+└── postcss.config.js
+
+
+## ⚙️ Установка и запуск
+
+### Требования
+- Node.js 16+ (для Windows 8.1 — максимум Node.js 16.20.2)
+- npm 8+
+- Аккаунт Supabase
+
+### Шаги
+
+1. **Клонируйте репозиторий:**
+   ```bash
+   git clone https://github.com/Maxim-Utkin-1192/DZ5.git
+   cd DZ5
